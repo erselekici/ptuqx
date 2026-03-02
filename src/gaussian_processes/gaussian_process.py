@@ -16,38 +16,39 @@ class GaussianProcess:
         """
         self.kernel = kernel
         self.noise = noise
-        self.X_train = None
-        self.y_train = None
-        self.K_inv = None
+        self.training_inputs = None
+        self.measurements = None
+        self.inverse_covariance_matrix = None
 
-    def fit(self, X_train: np.ndarray, y_train: np.ndarray):
+    def fit_to_training_data(self, training_inputs: np.ndarray, measurements: np.ndarray):
         """
         Fit the Gaussian Process model to the training data.
 
         Args:
-            X_train: The training input samples. (n_samples x n_features)
-            y_train: The training target values. (n_samples,)
+            training_inputs: The training input samples. (n_training_samples,)
+            measurements: The training target values. (n_training_samples,)
+            y_train: The training target values. (n_training_samples,)
         """
-        self.X_train = X_train
-        self.y_train = y_train
-        K = self.kernel(X_train, X_train) + self.noise * np.eye(len(X_train))
-        self.K_inv = np.linalg.inv(K)
+        self.training_inputs = training_inputs
+        self.measurements = measurements
+        covariance_matrix = self.kernel(training_inputs, training_inputs) + self.noise * np.eye(len(training_inputs))
+        self.inverse_covariance_matrix = np.linalg.inv(covariance_matrix)
 
-    def predict(self, X_test: np.ndarray) -> (np.ndarray, np.ndarray):
+    def predict(self, test_inputs: np.ndarray) -> (np.ndarray, np.ndarray):
         """
         Predict using the Gaussian Process model.
 
         Args:
-            X_test: The test input samples. (n_samples x n_features)
+            test_inputs: The test input samples. (n_test_samples,)
 
         Returns:
-            mean: The mean predictions for the test inputs. (n_samples,)
-            variance: The variance of the predictions for the test inputs. (n_samples,)
+            mean: The mean predictions for the test inputs. (n_test_samples,)
+            variance: The variance of the predictions for the test inputs. (n_test_samples,)
         """
-        K_s = self.kernel(self.X_train, X_test)
-        K_ss = self.kernel(X_test, X_test) + self.noise * np.eye(len(X_test))
+        K_s = self.kernel(self.training_inputs, test_inputs)
+        K_ss = self.kernel(test_inputs, test_inputs) + self.noise * np.eye(len(test_inputs))
 
-        mean = K_s.T @ self.K_inv @ self.y_train
-        variance = K_ss - K_s.T @ self.K_inv @ K_s
+        mean = K_s.T @ self.inverse_covariance_matrix @ self.measurements
+        variance = K_ss - K_s.T @ self.inverse_covariance_matrix @ K_s
 
         return mean, np.diag(variance)
