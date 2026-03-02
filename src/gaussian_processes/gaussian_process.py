@@ -34,7 +34,7 @@ class GaussianProcess:
         covariance_matrix = self.kernel(training_inputs, training_inputs) + self.noise * np.eye(len(training_inputs))
         self.inverse_covariance_matrix = np.linalg.inv(covariance_matrix)
 
-    def predict(self, test_inputs: np.ndarray) -> (np.ndarray, np.ndarray):
+    def predict(self, test_inputs: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         """
         Predict using the Gaussian Process model.
 
